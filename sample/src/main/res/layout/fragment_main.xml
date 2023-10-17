@@ -1,90 +1,134 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:id="@+id/main">
-<LinearLayout
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical"
-    tools:context=".ui.main.MainFragment">
-
-
-    <com.canhub.cropper.CropImageView
-        android:id="@+id/cropImageView"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        />
-<FrameLayout
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginTop="15dp">
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Camera"
-        android:layout_gravity="center"
-        android:id="@+id/btn_camera"/>
-
+    android:background="@color/black">
     <ImageView
-        android:id="@+id/ivRotate"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:src="@drawable/ic_rotate_left_24"
-        android:layout_gravity="center|end"
-        app:tint="@color/black"
-        android:layout_marginEnd="20dp"/>
-</FrameLayout>
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Pick Image"
-        android:layout_gravity="center"
-        android:layout_marginTop="15dp"
-        android:id="@+id/btn_pickImage"/>
-    <TextView
-        android:id="@+id/status"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:textAlignment="center"
-        android:textStyle="bold"
-        tools:text="Status" />
-
+        android:layout_height="match_parent"
+        android:src="@drawable/bg"
+        android:scaleType="centerCrop"
+        android:alpha="0.6"/>
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:orientation="horizontal">
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        tools:context=".ui.main.MainFragment">
 
-        <Button
-            android:id="@+id/start"
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp">
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="50dp"
+                android:src="@drawable/logo_new"
+                android:layout_centerInParent="true"/>
+
+            <ImageView
+                android:id="@+id/ivRotate"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="10dp"
+                android:src="@drawable/ic_rotate_left_24"
+                app:tint="@color/white" />
+        </RelativeLayout>
+
+
+
+        <com.canhub.cropper.CropImageView
+            android:id="@+id/cropImageView"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_marginTop="5dp"/>
+
+
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="4dp"
-            android:text="Start" />
+            android:layout_gravity="center"
+            android:layout_marginStart="40dp"
+            android:layout_marginTop="15dp"
+            android:layout_marginEnd="40dp">
 
-        <Button
-            android:id="@+id/stop"
-            android:layout_width="wrap_content"
+            <Button
+                android:id="@+id/btn_camera"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="start"
+                android:layout_marginEnd="14dp"
+                android:text="Camera"
+                />
+
+
+            <Button
+                android:id="@+id/btn_pickImage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:layout_marginStart="14dp"
+                android:text="Pick Image" />
+
+        </LinearLayout>
+
+
+        <TextView
+            android:id="@+id/status"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
-            android:text="Stop" />
+            android:layout_marginTop="8dp"
+            android:textAlignment="center"
+            android:textStyle="bold"
+            tools:text="Status"
+            android:textColor="@color/white"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_marginTop="15dp"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/start"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="24dp"
+                android:text="Start"
+                android:background="@drawable/rounded_button"/>
+
+            <Button
+                android:id="@+id/stop"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:text="Stop"
+                android:background="@drawable/rounded_button"
+                android:backgroundTint="@color/teal_700"/>
+        </LinearLayout>
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="150dp"
+            android:padding="16dp">
+
+            <TextView
+                android:id="@+id/text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textColor="@color/white"/>
+        </ScrollView>
+
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/text"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:padding="16dp"
-        android:scrollbars="vertical"
-        android:text="" />
 
-</LinearLayout>
-</ScrollView>
+</FrameLayout>
