@@ -3,7 +3,10 @@ package cz.adaptech.tesseract4android.sample.ui.main;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -27,6 +30,15 @@ import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.mlkit.vision.common.InputImage;
+import com.google.mlkit.vision.text.Text;
+import com.google.mlkit.vision.text.TextRecognition;
+import com.google.mlkit.vision.text.TextRecognizer;
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileDescriptor;
@@ -41,6 +53,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
 import cz.adaptech.tesseract4android.sample.Assets;
 import cz.adaptech.tesseract4android.sample.Config;
@@ -164,8 +177,13 @@ public class MainFragment extends Fragment {
 
 //            Path path  = Paths.get(String.valueOf(getActivity().getFilesDir()), "test.jpg");
 //            File file = path.toFile();
+
             if (file.exists()) {
-                viewModel.recognizeImage(file);
+                Boolean useMlModel = binding.switchMlModel.isChecked();
+                if (!useMlModel) {
+                    viewModel.recognizeImage(file);
+                }
+                detectTextBoxMLKit(useMlModel);
             }else {
                 Toast.makeText(getActivity(),"Please select a File",Toast.LENGTH_LONG).show();
             }
@@ -295,12 +313,86 @@ public class MainFragment extends Fragment {
                 }
             });
 
+    public void detectTextBoxMLKit(Boolean detectText){
+        if (detectText){
+            binding.status.setText("In Progress");
+        }
+        TextRecognizer recognizer =
+                TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS);
+
+        InputImage image = null;
+        Bitmap bitmap = binding.cropImageView.getCroppedImage();
+        Long startTime = System.currentTimeMillis();
+        try {
+//            image = InputImage.fromFilePath(getContext(), uri);
+
+            image = InputImage.fromBitmap(bitmap, 0);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
+        }
+
+
+
+        Task<Text> result =
+                recognizer.process(image)
+                        .addOnSuccessListener(new OnSuccessListener<Text>() {
+                            @Override
+                            public void onSuccess(Text visionText) {
+                                // Task completed successfully
+                                // ...
+
+                               List<Text.TextBlock> textBlocks = visionText.getTextBlocks();
+
+                               Long totalTime = System.currentTimeMillis() - startTime;
+                                Double seconds = totalTime/1000.0;
+                                if (detectText) {
+                                    binding.status.setText("Completed in " + seconds + " sec");
+                                }
+                                drawBoundingBoxes(bitmap,textBlocks,detectText);
+                            }
+                        })
+                        .addOnFailureListener(
+                                new OnFailureListener() {
+                                    @Override
+                                    public void onFailure(@NonNull Exception e) {
+                                        // Task failed with an exception
+                                        // ...
+                                    }
+                                });
+
+    }
 
     public static Bitmap rotateImage(Bitmap source, float angle) {
         Matrix matrix = new Matrix();
         matrix.postRotate(angle);
         return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(),
                 matrix, true);
+    }
+
+    public void drawBoundingBoxes(Bitmap bitmap,List<Text.TextBlock> textBlocks,boolean detectText){
+
+        bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+//        Canvas canvas = new Canvas(workingBitmap);
+        Canvas canvas = new Canvas(bitmap);
+
+        Paint paint=new Paint();
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setColor(Color.RED);
+        StringBuilder detectedText = new StringBuilder();
+        for (Text.TextBlock textBlock :textBlocks){
+
+            detectedText.append(textBlock.getText());
+            detectedText.append(System.lineSeparator());
+            if (textBlock.getBoundingBox()!=null) {
+                canvas.drawRect(textBlock.getBoundingBox(), paint);
+            }
+
+        }
+        binding.cropImageView.setImageBitmap(bitmap);
+        if (detectText){
+            binding.text.setText(detectedText);
+        }
     }
 
     public static void rotateAndCopyFile(File src, File dst) throws IOException
