@@ -38,7 +38,7 @@ public class MainViewModel extends AndroidViewModel {
 
     public MainViewModel(@NonNull Application application) {
         super(application);
-
+// Initializing the tesseract API
         tessApi = new TessBaseAPI(progressValues -> {
             progress.postValue("Progress: " + progressValues.getPercent() + " %");
         });
@@ -63,6 +63,12 @@ public class MainViewModel extends AndroidViewModel {
         }
     }
 
+    /**
+     * This Method is to initialize tesseract with the path language enginemode
+     * @param dataPath the path to which eng.traineddata is saved (our app files directory path)
+     * @param language language of tesseract model trained data(eng)
+     * @param engineMode tesseract ocr engine mode [TessBaseAPI.OEM_LSTM_ONLY :- Run LSTM only for better accuracy, but slower]
+     */
     public void initTesseract(@NonNull String dataPath, @NonNull String language, int engineMode) {
         Log.i(TAG, "Initializing Tesseract with: dataPath = [" + dataPath + "], " +
                 "language = [" + language + "], engineMode = [" + engineMode + "]");
@@ -74,6 +80,10 @@ public class MainViewModel extends AndroidViewModel {
         }
     }
 
+    /**
+     * This Method is to recognize the image using tesseract API
+     * @param imagePath the image file to be processed
+     */
     public void recognizeImage(@NonNull File imagePath) {
         if (!tessInit) {
             Log.e(TAG, "recognizeImage: Tesseract is not initialized");

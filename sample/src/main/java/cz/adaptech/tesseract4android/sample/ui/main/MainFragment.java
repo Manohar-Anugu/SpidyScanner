@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.net.Uri;
 import android.os.Bundle;
@@ -79,6 +78,7 @@ public class MainFragment extends Fragment {
         // Copy sample image and language data to storage
         Assets.extractAssets(requireContext());
 
+        // If tessaract is not initialized then initialize it
         if (!viewModel.isInitialized()) {
             String dataPath = Assets.getTessDataPath(requireContext());
             viewModel.initTesseract(dataPath, Config.TESS_LANG, Config.TESS_ENGINE);
@@ -89,6 +89,7 @@ public class MainFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
+        //setting the UI view for the screen
         binding = FragmentMainBinding.inflate(inflater, container, false);
 
         return binding.getRoot();
@@ -99,12 +100,15 @@ public class MainFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         // Registers a photo picker activity launcher in single-select mode.
+        //this callback will be triggered
         ActivityResultLauncher<PickVisualMediaRequest> pickMedia =
                 registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
                     // Callback is invoked after the user selects a media item or closes the
                     // photo picker.
                     if (uri != null) {
                         Log.d("PhotoPicker", "Selected URI: " + uri);
+
+                        //Start- Saving the phone file to our app storage
 
                         ParcelFileDescriptor parcelFileDescriptor = null;
                         try {
@@ -123,7 +127,10 @@ public class MainFragment extends Fragment {
                             throw new RuntimeException(e);
                         }
 
+                        //END- Saving the phone file to our app storage
+
                         selectedFile = path.toFile();
+                        //Setting the selected image to the Cropping Image view
                         binding.cropImageView.setImageUriAsync(uri);
 
                     } else {
@@ -131,6 +138,8 @@ public class MainFragment extends Fragment {
                     }
                 });
 
+
+        //This is called when ever user clicks on the pick image button
         binding.btnPickImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -144,39 +153,32 @@ public class MainFragment extends Fragment {
             }
         });
 
+
+        //If selected image is in wrong orientation then user can rotate the image using this button
         binding.ivRotate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 binding.cropImageView.rotateImage(90);
             }
         });
+
+
+        //This will trigger when ever user clicks on the Camera button
         binding.btnCamera.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
-//                if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.CAMERA)
-//                        == PackageManager.PERMISSION_DENIED){
-//                    ActivityCompat.requestPermissions(getActivity(), new String[] {Manifest.permission.CAMERA}, 500);
-//                    return;
-//                }
-//                if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE)
-//                        == PackageManager.PERMISSION_DENIED){
-//                    ActivityCompat.requestPermissions(getActivity(), new String[] {Manifest.permission.WRITE_EXTERNAL_STORAGE}, 500);
-//                    return;
-//                }
                 dispatchTakePictureIntent();
 
             }
         });
 
-//        binding.image.setImageBitmap(Assets.getImageBitmap(requireContext()));
+
+        // When ever user clicks on the start button this method will be triggered
         binding.start.setOnClickListener(v -> {
-//            File imageFile = Assets.getImageFile(requireContext());
 
+            //Getting the cropped part of the Image
             File file = saveCroppedImage();
-
-//            Path path  = Paths.get(String.valueOf(getActivity().getFilesDir()), "test.jpg");
-//            File file = path.toFile();
 
             if (file.exists()) {
                 Boolean useMlModel = binding.switchMlModel.isChecked();
@@ -205,6 +207,10 @@ public class MainFragment extends Fragment {
         });
     }
 
+    /**
+     * This method is to Save the cropped part of the image from the original Image
+     * @return
+     */
     private File saveCroppedImage(){
         File f = new File(getActivity().getCacheDir(), "test.jpg");
         try {
@@ -238,21 +244,11 @@ public class MainFragment extends Fragment {
 
     }
 
-    static final int REQUEST_IMAGE_CAPTURE = 1;
-
-//    private void dispatchTakePictureIntent() {
-//        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-//        try {
-//            someActivityResultLauncher.launch(takePictureIntent);
-//        } catch (ActivityNotFoundException e) {
-//            // display error state to the user
-//        }
-//    }
-
+    /**
+     *  Launch an intent to take picture from camera and save in to specified path
+     */
     private void dispatchTakePictureIntent() {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        // Ensure that there's a camera activity to handle the intent
-//        if (takePictureIntent.resolveActivity(getActivity().getPackageManager()) != null) {
             // Create the File where the photo should go
             File photoFile = null;
             try {
@@ -272,17 +268,19 @@ public class MainFragment extends Fragment {
     }
 
 
+    //Call back for getting the result from camera intent
     ActivityResultLauncher<Intent> someActivityResultLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             new ActivityResultCallback<ActivityResult>() {
                 @Override
                 public void onActivityResult(ActivityResult result) {
+                    // If the camera is successful and image is saved the result code will be OK
                     if (result.getResultCode() == Activity.RESULT_OK) {
-                        // There are no request codes
-//                        binding.image.setImageURI(null);
+
                         FileInputStream input = null;
                         selectedFile = new File(currentPhotoPath);
                         try {
+                            // delete already existing image from  path
                             input = new FileInputStream(selectedFile);
                             Path path  = Paths.get(String.valueOf(getActivity().getFilesDir()), "test.jpg");
                             File file = path.toFile();
@@ -291,18 +289,13 @@ public class MainFragment extends Fragment {
                             if (!file.exists()){
                                 file.createNewFile();
                             }
-                            rotateAndCopyFile(selectedFile,file);
-//                            try {
-//                                Thread.sleep(500);
-//                            } catch (InterruptedException e) {
-//                                throw new RuntimeException(e);
-//                            }
+                            //saving the new camera image to the path
+                            copyFileFromSourceToDestination(selectedFile,file);
+
                             selectedFile = file;
+                            //setting the image to cropped image view
                             binding.cropImageView.setImageUriAsync(Uri.fromFile(selectedFile));
 
-//                            Files.copy(input, path, StandardCopyOption.REPLACE_EXISTING);
-//                            input.close();
-//                            selectedFile = path.toFile();
                         } catch (FileNotFoundException e) {
                             throw new RuntimeException(e);
                         } catch (IOException e) {
@@ -313,6 +306,12 @@ public class MainFragment extends Fragment {
                 }
             });
 
+
+    /**
+     * This method is to draw the bounding boxes for the text inside the image using google mlkit model
+     * @param detectText if true then text detection is done using the google mlkit model else if false then text detection is
+     *                   done using Tesseract model
+     */
     public void detectTextBoxMLKit(Boolean detectText){
         if (detectText){
             binding.status.setText("In Progress");
@@ -321,7 +320,9 @@ public class MainFragment extends Fragment {
                 TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS);
 
         InputImage image = null;
+        //Getting the cropped image for processing
         Bitmap bitmap = binding.cropImageView.getCroppedImage();
+        //start time is used for calculating the time taken for detection of the text
         Long startTime = System.currentTimeMillis();
         try {
 //            image = InputImage.fromFilePath(getContext(), uri);
@@ -333,22 +334,26 @@ public class MainFragment extends Fragment {
         }
 
 
-
+/// processing the image using the google mlkit model
         Task<Text> result =
                 recognizer.process(image)
                         .addOnSuccessListener(new OnSuccessListener<Text>() {
                             @Override
                             public void onSuccess(Text visionText) {
                                 // Task completed successfully
-                                // ...
+                                // This method is called once the image is successfully processed, we get the result in the vision text
 
+                                //getting list of text boxes from the result
                                List<Text.TextBlock> textBlocks = visionText.getTextBlocks();
 
+                               //calculating total time taken for processing the image
                                Long totalTime = System.currentTimeMillis() - startTime;
                                 Double seconds = totalTime/1000.0;
+                                //if use ML model checkbox is checked then the detected text is set using the ML result
                                 if (detectText) {
                                     binding.status.setText("Completed in " + seconds + " sec");
                                 }
+                                //drawing the bounding boxes around the detected text in the image
                                 drawBoundingBoxes(bitmap,textBlocks,detectText);
                             }
                         })
@@ -356,20 +361,21 @@ public class MainFragment extends Fragment {
                                 new OnFailureListener() {
                                     @Override
                                     public void onFailure(@NonNull Exception e) {
-                                        // Task failed with an exception
+                                        // This method is called if the image is unable to be processed by mlkit model
                                         // ...
                                     }
                                 });
 
     }
 
-    public static Bitmap rotateImage(Bitmap source, float angle) {
-        Matrix matrix = new Matrix();
-        matrix.postRotate(angle);
-        return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(),
-                matrix, true);
-    }
 
+    /**
+     * This method is for drawing the bounding boxes around the detected text in the image
+     * @param bitmap the image around in which the bounding boxes need to drawn
+     * @param textBlocks the coordinates for the bounding boxes
+     * @param detectText if true then text detection is done using the google mlkit model else if false then text detection is
+     *      *                   done using Tesseract model
+     */
     public void drawBoundingBoxes(Bitmap bitmap,List<Text.TextBlock> textBlocks,boolean detectText){
 
         bitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
@@ -395,47 +401,14 @@ public class MainFragment extends Fragment {
         }
     }
 
-    public static void rotateAndCopyFile(File src, File dst) throws IOException
+    /**
+     * This method is to Copy the image from source to destination
+     * @param src The source file of the image
+     * @param dst The destination file of the image
+     * @throws IOException
+     */
+    public static void copyFileFromSourceToDestination(File src, File dst) throws IOException
     {
-/*
-
-        Bitmap bitmap = BitmapFactory.decodeFile(src.getAbsolutePath());
-        ExifInterface ei = new ExifInterface(src.getAbsolutePath());
-        int orientation = ei.getAttributeInt(ExifInterface.TAG_ORIENTATION,
-                ExifInterface.ORIENTATION_UNDEFINED);
-
-        Bitmap rotatedBitmap = null;
-        switch(orientation) {
-
-            case ExifInterface.ORIENTATION_ROTATE_90:
-                rotatedBitmap = rotateImage(bitmap, 90);
-                break;
-
-            case ExifInterface.ORIENTATION_ROTATE_180:
-                rotatedBitmap = rotateImage(bitmap, 180);
-                break;
-
-            case ExifInterface.ORIENTATION_ROTATE_270:
-                rotatedBitmap = rotateImage(bitmap, 270);
-                break;
-
-            case ExifInterface.ORIENTATION_NORMAL:
-            default:
-                rotatedBitmap = bitmap;
-        }
-
-
-        try (FileOutputStream out = new FileOutputStream(dst)) {
-            rotatedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, out); // bmp is your Bitmap instance
-            // PNG is a lossless format, the compression factor (100) is ignored
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-
-*/
-
-
 
         FileChannel inChannel = new FileInputStream(src).getChannel();
         FileChannel outChannel = new FileOutputStream(dst).getChannel();
@@ -454,6 +427,11 @@ public class MainFragment extends Fragment {
 
     String currentPhotoPath;
 
+    /**
+     * This Method is to Create a unique path for saving the result from camera
+     * @return [File]- File with unique path
+     * @throws IOException
+     */
     private File createImageFile() throws IOException {
         // Create an image file name
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
